@@ -1,8 +1,602 @@
 {% extends 'crawler/base.html' %}
 {% block titleblock %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<!-- <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script> -->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 {% endblock %}
 
 {% block infoblock %}
+	<!-- {% for user in users %}
     <p>Hello {{user}}</p>
+	{% endfor %} -->
+	 <div>
+        <div class = "col-md-6">
+            <hr>
+            <table class="columns">
+                <thead>
+                    {% for user in users %}
+    					<th>Hello {{user}}</th>
+					{% endfor %}
+                </thead>
+                <tbody id="Subs">
+                	<tr id="Official/Unofficial Submissions">
+                	</tr>
+                	<tr id="Practice/Virtual Submissions">
+                	</tr>
+                	<tr id="Official/Unofficial tags">
+                	</tr>
+                	<tr id="Practice/Virtual tags">
+                	</tr>
+                	<tr id="Official/Unofficial ratings">
+                	</tr>
+                	<tr id="Practice/Virtual ratings">
+                	</tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script type = "text/javascript">
+    	let api_url = 'https://codeforces.com/api/';
+    	let handle_names = {{ users|safe }}
+    	console.log(handle_names);
+    	let handles = {}
+    	
+    	google.charts.load('current', {'packages':['corechart']})
+		google.charts.setOnLoadCallback(SubmissionsDetails);
+
+		let handl;
+		for (handl in handle_names){
+			let handle = handle_names[handl];
+			handles[handle] = {};
+		}
+		for (handl in handle_names){
+			let handle = handle_names[handl];
+			handles[handle]['totalSub'] = 0;
+	        handles[handle]['submissions'] = {'Practice': {'AC': 0, 'WA': 0, 'RTE': 0, 'TLE': 0,
+	         'MLE': 0, 'CE': 0}, 'Unofficial': {'AC': 0, 'WA': 0, 'RTE': 0, 'TLE': 0,
+	          'MLE': 0, 'CE': 0}, 'Virtual': {'AC': 0, 'WA': 0, 'RTE': 0, 'TLE': 0,
+	         'MLE': 0, 'CE': 0}, 'Contest':{'AC': 0, 'WA': 0, 'RTE': 0, 'TLE': 0,
+	          'MLE': 0, 'CE': 0}} //To store submissions categorized into contest, unofficial, virtual, practice.
+	        handles[handle]['problems_by_tag'] = {} //To store problems tag, categorized into contest, unofficial, virtual, practice.
+	        handles[handle]['problem_ratings'] = {} //To store problems rating, categorized into contest, unofficial, virtual,  practice.
+	        handles[handle]['contests'] = {}
+    	}
+    	let contest_list = [];
+
+		function SubmissionsDetails(){
+			let handl;
+			for(handl in handle_names){
+				let handle = handle_names[handl];
+				$.get(api_url+'user.status', {handle: handle}, function(data, status)
+			    {
+			       if(status){
+
+				        handles[handle]['totalSub'] = data.result.length
+				        // console.log(totalSub)
+				        console.log(`setor ${handle}`)
+				        for(let i = handles[handle]['totalSub']-1; i > 0; i-=1){
+				        let subinfo = data.result[i]
+				                        // console.log(subinfo.verdict)
+				                        let tags = subinfo.problem.tags
+				                        switch(subinfo.author.participantType){
+				                                case "PRACTICE":
+				                                    if(handles[handle]['problems_by_tag']['Practice'] === undefined){
+				                                        handles[handle]['problems_by_tag']['Practice'] = {}
+				                                    }
+				                                    for(let j=0; j<tags.length; j+=1){
+				                                        if(handles[handle]['problems_by_tag']['Practice'][tags[j]] === undefined){
+				                                            handles[handle]['problems_by_tag']['Practice'][tags[j]]=1
+				                                        }
+				                                        else{
+				                                            handles[handle]['problems_by_tag']['Practice'][tags[j]] += 1
+				                                        }
+				                                    }
+				                                    switch(subinfo.verdict){
+				                                        case 'OK':
+				                                            handles[handle]['submissions']['Practice']['AC']++
+				                                            break
+				                                        case 'TIME_LIMIT_EXCEEDED':
+				                                            handles[handle]['submissions']['Practice']['TLE']++
+				                                            break;
+				                                        case 'WRONG_ANSWER':
+				                                            handles[handle]['submissions']['Practice']['WA']++
+				                                            break;
+				                                        case 'MEMORY_LIMIT_EXCEEDED':
+				                                            handles[handle]['submissions']['Practice']['MLE']++
+				                                            break;
+				                                        case 'RUNTIME_ERROR':
+				                                            handles[handle]['submissions']['Practice']['RTE']++
+				                                            break;
+				                                        default:
+				                                            handles[handle]['submissions']['Practice']['CE']++
+				                                    }
+				                                    break;
+				                                case "CONTESTANT":
+				                                    if(handles[handle]['contests'][subinfo.contestId] === undefined){
+				                                        handles[handle]['contests'][subinfo.contestId] = {'Rank': -1, 'New Rating': -1, 'Rating Changes' : 0,'Attempts': {}}
+				                                    }
+				                                    if(handles[handle]['contests'][subinfo.contestId]['Attempts'][subinfo.problem.index] === undefined){
+				                                        handles[handle]['contests'][subinfo.contestId]['Attempts'][subinfo.problem.index] = false;
+				                                    }
+				                                    if(handles[handle]['problems_by_tag']['Contest'] === undefined){
+				                                        handles[handle]['problems_by_tag']['Contest'] = {}
+				                                    }
+				                                    for(let j=0; j<tags.length; j+=1){
+				                                        if(handles[handle]['problems_by_tag']['Contest'][tags[j]] === undefined){
+				                                            handles[handle]['problems_by_tag']['Contest'][tags[j]]=1
+				                                        }
+				                                        else{
+				                                            handles[handle]['problems_by_tag']['Contest'][tags[j]] += 1
+				                                        }
+				                                    }
+				                                    switch(subinfo.verdict){
+				                                        case 'OK':
+				                                            handles[handle]['contests'][subinfo.contestId]['Attempts'][subinfo.problem.index] |= true;
+				                                            handles[handle]['submissions']['Contest']['AC']++
+				                                            break
+				                                        case 'TIME_LIMIT_EXCEEDED':
+				                                            handles[handle]['submissions']['Contest']['TLE']++
+				                                            break;
+				                                        case 'WRONG_ANSWER':
+				                                            handles[handle]['submissions']['Contest']['WA']++
+				                                            break;
+				                                        case 'MEMORY_LIMIT_EXCEEDED':
+				                                            handles[handle]['submissions']['Contest']['MLE']++
+				                                            break;
+				                                        case 'RUNTIME_ERROR':
+				                                            handles[handle]['submissions']['Contest']['RTE']++
+				                                            break;
+				                                        default:
+				                                            handles[handle]['submissions']['Contest']['CE']++
+				                                    }
+				                                    break;
+				                                case "OUT_OF_COMPETITION":
+				                                    if(handles[handle]['contests'][subinfo.contestId] === undefined){
+				                                        handles[handle]['contests'][subinfo.contestId] = {'Rank': -1, 'New Rating': -1, 'Rating Changes' : 0,'Attempts': {}}
+				                                    }
+				                                    if(handles[handle]['contests'][subinfo.contestId]['Attempts'][subinfo.problem.index] === undefined){
+				                                        handles[handle]['contests'][subinfo.contestId]['Attempts'][subinfo.problem.index] = false;
+				                                    }
+				                                    if(handles[handle]['problems_by_tag']['Unofficial'] === undefined){
+				                                        handles[handle]['problems_by_tag']['Unofficial'] = {}
+				                                    }
+				                                    for(let j=0; j<tags.length; j+=1){
+				                                        if(handles[handle]['problems_by_tag']['Unofficial'][tags[j]] === undefined){
+				                                            handles[handle]['problems_by_tag']['Unofficial'][tags[j]]=1
+				                                        }
+				                                        else{
+				                                            handles[handle]['problems_by_tag']['Unofficial'][tags[j]] += 1
+				                                        }
+				                                    }
+				                                    switch(subinfo.verdict){
+				                                        case 'OK':
+				                                            handles[handle]['contests'][subinfo.contestId]['Attempts'][subinfo.problem.index] |= true;
+				                                            handles[handle]['submissions']['Unofficial']['AC']++
+				                                            break
+				                                        case 'TIME_LIMIT_EXCEEDED':
+				                                            handles[handle]['submissions']['Unofficial']['TLE']++
+				                                            break;
+				                                        case 'WRONG_ANSWER':
+				                                            handles[handle]['submissions']['Unofficial']['WA']++
+				                                            break;
+				                                        case 'MEMORY_LIMIT_EXCEEDED':
+				                                            handles[handle]['submissions']['Unofficial']['MLE']++
+				                                            break;
+				                                        case 'RUNTIME_ERROR':
+				                                            handles[handle]['submissions']['Unofficial']['RTE']++
+				                                            break;
+				                                        default:
+				                                            handles[handle]['submissions']['Unofficial']['CE']++
+				                                    }                                
+				                                    break;
+				                                default:
+				                                    if(handles[handle]['problems_by_tag']['Virtual'] === undefined){
+				                                        handles[handle]['problems_by_tag']['Virtual'] = {}
+				                                    }
+				                                    for(let j=0; j<tags.length; j+=1){
+				                                        if(handles[handle]['problems_by_tag']['Virtual'][tags[j]] === undefined){
+				                                            handles[handle]['problems_by_tag']['Virtual'][tags[j]]=1
+				                                        }
+				                                        else{
+				                                            handles[handle]['problems_by_tag']['Virtual'][tags[j]] += 1
+				                                        }
+				                                    }
+				                                    switch(subinfo.verdict){
+				                                        case 'OK':
+				                                            handles[handle]['submissions']['Virtual']['AC']++
+				                                            break
+				                                        case 'TIME_LIMIT_EXCEEDED':
+				                                            handles[handle]['submissions']['Virtual']['TLE']++
+				                                            break;
+				                                        case 'WRONG_ANSWER':
+				                                            handles[handle]['submissions']['Virtual']['WA']++
+				                                            break;
+				                                        case 'MEMORY_LIMIT_EXCEEDED':
+				                                            handles[handle]['submissions']['Virtual']['MLE']++
+				                                            break;
+				                                        case 'RUNTIME_ERROR':
+				                                            handles[handle]['submissions']['Virtual']['RTE']++
+				                                            break;
+				                                        default:
+				                                            handles[handle]['submissions']['Virtual']['CE']++
+				                                    }
+				                            }
+
+				                        if(subinfo.problem.rating){
+				                            switch(subinfo.author.participantType){
+				                                case "PRACTICE":
+				                                    if(handles[handle]['problem_ratings']['Practice'] === undefined){
+				                                        handles[handle]['problem_ratings']['Practice'] = {}
+				                                    }
+				                                    if(handles[handle]['problem_ratings']['Practice'][subinfo.problem.rating] === undefined){
+				                                        handles[handle]['problem_ratings']['Practice'][subinfo.problem.rating]=1
+				                                    }
+				                                    else{
+				                                        handles[handle]['problem_ratings']['Practice'][subinfo.problem.rating]++
+				                                    }
+				                                    break;
+				                                case "CONTESTANT":
+				                                    if(handles[handle]['problem_ratings']['Contest'] === undefined){
+				                                        handles[handle]['problem_ratings']['Contest'] = {}
+				                                    }
+				                                    if(handles[handle]['problem_ratings']['Contest'][subinfo.problem.rating] === undefined){
+				                                        handles[handle]['problem_ratings']['Contest'][subinfo.problem.rating] = 1
+				                                    }
+				                                    else{
+				                                        handles[handle]['problem_ratings']['Contest'][subinfo.problem.rating]++
+				                                    }
+				                                    break;
+				                                case "OUT_OF_COMPETITION":
+				                                    if(handles[handle]['problem_ratings']['Unofficial'] === undefined){
+				                                        handles[handle]['problem_ratings']['Unofficial'] = {}
+				                                    }
+				                                    if(handles[handle]['problem_ratings']['Unofficial'][subinfo.problem.rating] === undefined){
+				                                       handles[handle]['problem_ratings']['Unofficial'][subinfo.problem.rating] = 1
+				                                    }
+				                                    else{
+				                                        handles[handle]['problem_ratings']['Unofficial'][subinfo.problem.rating]++
+				                                    }
+				                                    break;
+				                                default:
+				                                    if(handles[handle]['problem_ratings']['Virtual'] === undefined){
+				                                        handles[handle]['problem_ratings']['Virtual'] = {}
+				                                    }
+				                                    if(handles[handle]['problem_ratings']['Virtual'][subinfo.problem.rating] === undefined){
+				                                        handles[handle]['problem_ratings']['Virtual'][subinfo.problem.rating]=1
+				                                    }
+				                                    else{
+				                                        handles[handle]['problem_ratings']['Virtual'][subinfo.problem.rating]++
+				                                    }
+				                            }
+				                        }
+				        }    
+				        Contests(handle);
+				        contestlist(handle);
+				        callingdrawCharts(handle);
+				    }
+			       else{
+
+			       }
+			    })
+			}
+			
+		}
+		function Contests(handle){
+            $.get(api_url+'user.rating', {handle: handle}, function(data, status){
+                if(status){
+                    console.log(`kela ${handle}`);
+                    let rating = {};
+                    let total = data.result.length;
+                    for(let i=0; i < total; i+=1){
+                        handles[handle]['contests'][data.result[i].contestId]['Rank'] = data.result[i].rank;
+                        handles[handle]['contests'][data.result[i].contestId]['New Rating'] = data.result[i].newRating;
+                        handles[handle]['contests'][data.result[i].contestId]['Rating Changes'] = data.result[i].newRating - data.result[i].oldRating;
+                    }
+                }
+                else{
+
+                }    
+            })
+        }
+        function contestlist(handle){
+        	if(contest_list.length){
+        		let total = contest_list.length;
+        		for(let i=0; i<total; i++){
+                    if(handles[handle]['contests'][contest_list[i].id] !== undefined){
+                        handles[handle]['contests'][contest_list[i].id]['Contest'] = contest_list[i].name;
+
+                    }
+                }
+        	}
+            else{
+            	$.get('https://codeforces.com/api/contest.list', function(data,status){
+                	let total = data.result.length;
+                	contest_list = data.result;
+                	for(let i=0; i<total; i++){
+                    	if(handles[handle]['contests'][data.result[i].id] !== undefined){
+                        	handles[handle]['contests'][data.result[i].id]['Contest'] = data.result[i].name;
+                    	}
+                	}
+            	})
+            }
+        }
+        function callingdrawCharts(handle){
+        	if(typeof google.visualization === 'undefined'){
+	                        google.charts.setOnLoadCallback(drawCharts)
+	                    }
+	            else{
+	                drawCharts(handle);
+	            }
+        }
+        function drawCharts(handle){
+        				let tabledata = document.createElement("td");
+        				tabledata.setAttribute("id", `table for ${handle} official subs`);
+        				let element = document.getElementById("Official/Unofficial Submissions");
+        				element.appendChild(tabledata);
+        				let divdata = document.createElement("div");
+        				divdata.setAttribute("id", `div for ${handle} official subs`)
+        				divdata.setAttribute("style", "border: 1px solid #ccc");
+        				element = document.getElementById(`table for ${handle} official subs`);
+        				element.appendChild(divdata);
+
+        				tabledata = document.createElement("td");
+        				tabledata.setAttribute("id", `table for ${handle} practice subs`);
+        				element = document.getElementById("Practice/Virtual Submissions");
+        				element.appendChild(tabledata);
+        				divdata = document.createElement("div");
+        				divdata.setAttribute("id", `div for ${handle} practice subs`)
+        				divdata.setAttribute("style", "border: 1px solid #ccc");
+        				element = document.getElementById(`table for ${handle} practice subs`);
+        				element.appendChild(divdata);
+
+        				tabledata = document.createElement("td");
+        				tabledata.setAttribute("id", `table for ${handle} official tags`);
+        				element = document.getElementById("Official/Unofficial tags");
+        				element.appendChild(tabledata);
+        				divdata = document.createElement("div");
+        				divdata.setAttribute("id", `div for ${handle} official tags`)
+        				divdata.setAttribute("style", "border: 1px solid #ccc");
+        				element = document.getElementById(`table for ${handle} official tags`);
+        				element.appendChild(divdata);
+
+        				tabledata = document.createElement("td");
+        				tabledata.setAttribute("id", `table for ${handle} practice tags`);
+        				element = document.getElementById("Practice/Virtual tags");
+        				element.appendChild(tabledata);
+        				divdata = document.createElement("div");
+        				divdata.setAttribute("id", `div for ${handle} practice tags`)
+        				divdata.setAttribute("style", "border: 1px solid #ccc");
+        				element = document.getElementById(`table for ${handle} practice tags`);
+        				element.appendChild(divdata);
+
+        				tabledata = document.createElement("td");
+        				tabledata.setAttribute("id", `table for ${handle} official ratings`);
+        				element = document.getElementById("Official/Unofficial ratings");
+        				element.appendChild(tabledata);
+        				divdata = document.createElement("div");
+        				divdata.setAttribute("id", `div for ${handle} official ratings`)
+        				divdata.setAttribute("style", "border: 1px solid #ccc");
+        				element = document.getElementById(`table for ${handle} official ratings`);
+        				element.appendChild(divdata);
+
+        				tabledata = document.createElement("td");
+        				tabledata.setAttribute("id", `table for ${handle} practice ratings`);
+        				element = document.getElementById("Practice/Virtual ratings");
+        				element.appendChild(tabledata);
+        				divdata = document.createElement("div");
+        				divdata.setAttribute("id", `div for ${handle} practice ratings`)
+        				divdata.setAttribute("style", "border: 1px solid #ccc");
+        				element = document.getElementById(`table for ${handle} practice ratings`);
+        				element.appendChild(divdata);
+
+        			// }
+
+        			// for (handl in handle_names){
+	           			let data = new google.visualization.DataTable();
+	           			
+	           			console.log(`maksudu ${handle}`);
+	                    //Declare Columns
+	                    data.addColumn('string', 'Verdicts');
+	                    data.addColumn('number', 'Submissions');
+	                    let entry = {}; 
+	                    for (let key in handles[handle]['submissions']['Contest']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['submissions']['Contest'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['submissions']['Contest'][key];
+	                        }
+	                    }
+	                    for (let key in handles[handle]['submissions']['Unofficial']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['submissions']['Unofficial'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['submissions']['Unofficial'][key];
+	                        }
+	                    }
+	                    let entries = Object.entries(entry);
+	                    data.addRows(entries)
+
+	                    let chart_options = {title:`Verdicts of ${handle} in Official/Unofficial`,
+	                        is3D: true,
+	                        width:600,
+	                        height:400
+	                    };
+	                    let chart = new google.visualization.PieChart(document.  getElementById(`div for ${handle} official subs`));
+	                    chart.draw(data, chart_options);
+
+	                    data = new google.visualization.DataTable();
+
+	                    //Declare Columns
+	                    data.addColumn('string', 'Verdicts');
+	                    data.addColumn('number', 'Submissions');
+	                    entry = {}
+	                    for (let key in handles[handle]['submissions']['Virtual']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['submissions']['Virtual'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['submissions']['Virtual'][key];
+	                        }
+	                    }
+	                    for (let key in handles[handle]['submissions']['Practice']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['submissions']['Practice'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['submissions']['Practice'][key];
+	                        }
+	                    }
+	                    entries = Object.entries(entry);
+	                    data.addRows(entries)
+
+	                    chart_options = {title:`Verdicts of ${handle} in Practice/Virtual`,
+	                        is3D: true,
+	                        width:600,
+	                        height:400
+	                    };
+	                    chart = new google.visualization.PieChart(document.  getElementById(`div for ${handle} practice subs`));
+	                    chart.draw(data, chart_options);
+
+	        // --------------------------------------------------------------------------------------------------------------------
+	                    data  = new google.visualization.DataTable();
+	                    //Declare Columns
+	                    data.addColumn('string', 'Tags');
+	                    data.addColumn('number', 'Counts');
+	                    entry = {};
+	                    for (let key in handles[handle]['problems_by_tag']['Contest']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['problems_by_tag']['Contest'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['problems_by_tag']['Contest'][key];
+	                        }
+	                    }
+	                    for (let key in handles[handle]['problems_by_tag']['Unofficial']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['problems_by_tag']['Unofficial'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['problems_by_tag']['Unofficial'][key];
+	                        }
+	                    }
+                    	entries = Object.entries(entry);
+                    	data.addRows(entries)
+
+	                    chart_options = {
+	                        title: `${handle} in Official/Unofficial Contests`,
+	                        pieHole: 0.4,
+	                        width:600,
+	                        height:400
+	                    };
+	                    chart = new google.visualization.PieChart(document.getElementById(`div for ${handle} official tags`));
+	                    chart.draw(data, chart_options)
+
+	                    data = new google.visualization.DataTable();
+
+	                    //Declare Columns
+	                    data.addColumn('string', 'Tags');
+	                    data.addColumn('number', 'Counts');
+	                    entry = {}
+	                    for (let key in handles[handle]['problems_by_tag']['Virtual']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['problems_by_tag']['Virtual'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['problems_by_tag']['Virtual'][key];
+	                        }
+	                    }
+	                    for (let key in handles[handle]['problems_by_tag']['Practice']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['problems_by_tag']['Practice'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['problems_by_tag']['Practice'][key];
+	                        }
+	                    }
+	                    entries = Object.entries(entry);
+	                    data.addRows(entries)
+
+	                    chart_options = {
+	                        title: `${handle} in Practice/Virtual Contests`,
+	                        pieHole: 0.4,
+	                        width:600,
+	                        height:400
+	                    };
+	                    chart = new google.visualization.PieChart(document.getElementById(`div for ${handle} practice tags`));
+	                    chart.draw(data, chart_options)
+
+	        // --------------------------------------------------------------------------------------------------------------
+
+	        			data  = new google.visualization.DataTable();
+
+	                    //Declare Columns
+	                    data.addColumn('string', 'Problem Ratings');
+	                    data.addColumn('number', 'Counts');
+	                    entry = {};
+	                    for (let key in handles[handle]['problem_ratings']['Contest']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['problem_ratings']['Contest'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['problem_ratings']['Contest'][key];
+	                        }
+	                    }
+	                    for (let key in handles[handle]['problem_ratings']['Unofficial']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['problem_ratings']['Unofficial'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['problem_ratings']['Unofficial'][key];
+	                        }
+	                    }
+	                    entries = Object.entries(entry);
+	                    data.addRows(entries)
+
+	                    chart_options = {
+	                        title: `${handle} in Official/Unofficial Contests`,
+	                        pieHole: 0.4,
+	                        width:600,
+	                        height:400
+	                    };
+	                    chart = new google.visualization.PieChart(document.getElementById(`div for ${handle} official ratings`));
+	                    chart.draw(data, chart_options)
+
+	                    data = new google.visualization.DataTable();
+
+	                    //Declare Columns
+	                    data.addColumn('string', 'Problem Ratings');
+	                    data.addColumn('number', 'Counts');
+	                    entry = {};
+	                    for (let key in handles[handle]['problem_ratings']['Virtual']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['problem_ratings']['Virtual'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['problem_ratings']['Virtual'][key];
+	                        }
+	                    }
+	                    for (let key in handles[handle]['problem_ratings']['Practice']){
+	                        if(entry[key] === undefined){
+	                            entry[key] = handles[handle]['problem_ratings']['Practice'][key];
+	                        }
+	                        else{
+	                            entry[key] += handles[handle]['problem_ratings']['Practice'][key];
+	                        }
+	                    }
+	                    entries = Object.entries(entry);
+	                    data.addRows(entries)
+
+	                    chart_options = {
+	                        title: `${handle} in Practice/Virtual Contests`,
+	                        pieHole: 0.4,
+	                        width:600,
+	                        height:400
+	                    };
+	                    chart = new google.visualization.PieChart(document.getElementById(`div for ${handle} practice ratings`));
+	                    chart.draw(data, chart_options)
+        }
+    </script>
 {% endblock %}
