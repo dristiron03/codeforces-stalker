@@ -40,7 +40,6 @@ Here are some screenshots of the project:
 ![Screenshot from 2020-08-06 11-08-17](https://user-images.githubusercontent.com/45798981/89500169-e309c000-d7de-11ea-9502-487662e60d37.png)
 
 ### Compare Stats Page: User can get a visual representation of comparision between the handles inputed.
-![Screenshot from 2020-08-06 11-08-35](https://user-images.githubusercontent.com/45798981/89500301-2401d480-d7df-11ea-8f87-bed34b58bb97.png)
 ![Screenshot from 2020-08-06 11-08-53](https://user-images.githubusercontent.com/45798981/89500309-25cb9800-d7df-11ea-8078-27e3f46ec1b9.png)
 ![Screenshot from 2020-08-06 11-10-55](https://user-images.githubusercontent.com/45798981/89500315-28c68880-d7df-11ea-8c25-c7902fec25e3.png)
 
