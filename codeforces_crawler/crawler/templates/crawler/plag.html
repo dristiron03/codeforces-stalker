@@ -1,0 +1,17 @@
+{% extends 'crawler/base.html' %}
+{% block titleblock %}
+{% load static %}
+<link href="https://fonts.googleapis.com/css2?family=Lato&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Raleway&amp;display=swap" rel="stylesheet">
+<link href="{% static "crawler/sa.css" %}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="col text-center">
+        {% for url in urls %}
+            <h2> {{url.match}} {{url.moss_url}} {{url.cf_url}} </h2>
+        {% endfor %}
+    </div>
+</body>
+{% endblock %}
+</html>

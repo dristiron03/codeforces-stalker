@@ -1,0 +1,22 @@
+{% extends 'crawler/base.html' %}
+{% block titleblock %}
+{% load static %}
+<link href="https://fonts.googleapis.com/css2?family=Lato&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Raleway&amp;display=swap" rel="stylesheet">
+<link href="{% static "crawler/sa.css" %}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="col text-center">
+        <form method="POST" class="form-horizontal">
+            <h2>Enter your username</h2>
+            {{form.as_p}}
+            {% csrf_token %}
+            <button type="submit" id="submit" class="submit-button">
+                Submit
+            </button>
+        </form>
+    </div>
+</body>
+{% endblock %}
+</html>
