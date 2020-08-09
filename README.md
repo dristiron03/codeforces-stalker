@@ -43,5 +43,9 @@ Here are some screenshots of the project:
 ![Screenshot from 2020-08-06 11-08-53](https://user-images.githubusercontent.com/45798981/89500309-25cb9800-d7df-11ea-8078-27e3f46ec1b9.png)
 ![Screenshot from 2020-08-06 11-10-55](https://user-images.githubusercontent.com/45798981/89500315-28c68880-d7df-11ea-8c25-c7902fec25e3.png)
 
+### Plag Check Page: You can give credentials of a particular submission and it will run a plag check against all submissions of the problem on codeforces and return the submissions with same/similar code after running plag check.
+![Screenshot from 2020-08-09](https://github.com/dristiron03/codeforces-stalker/blob/master/img/Screenshot%20(61).png)
+
+
 ---
 
